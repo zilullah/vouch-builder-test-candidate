@@ -1,19 +1,20 @@
-import { Evidence } from '../value-objects/evidence';
+import { ThreadStatus } from '../entities/issue-thread';
 
-export interface HandoverItem {
-  issueId: string;
+export interface HandoverThread {
+  id: string;
+  title: string;
   room: string | null;
-  actionRequired: string; // What the morning manager needs to do (Action-first)
-  summary: string; // A concise explanation grounded in evidence
-  evidence: Evidence[]; // Traceability: must have at least one piece of evidence
+  status: ThreadStatus;
+  summary: string[];       // operational statements only, no metadata
+  confidence: 'high' | 'medium' | 'low';
 }
 
 export interface Handover {
   hotelId: string;
-  shiftDate: string; // The date of the morning handover
-  highPriority: HandoverItem[]; // Needs immediate action
-  stillOpen: HandoverItem[]; // Carried over from previous shifts
-  newlyResolved: HandoverItem[]; // Fixed during the night
-  newTonight: HandoverItem[]; // Emerged during this shift
-  warnings: HandoverItem[]; // Contradictions, prompt injections, or incomplete data
+  generatedAt: string;
+  highPriority: HandoverThread[];
+  stillOpen: HandoverThread[];
+  newlyResolved: HandoverThread[];
+  newTonight: HandoverThread[];
+  warnings: string[];
 }

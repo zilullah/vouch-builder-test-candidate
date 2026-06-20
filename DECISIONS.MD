@@ -263,6 +263,19 @@ TypeScript interfaces representing the core business domain: `Hotel`, `Event`, `
 - **Deterministic Guardrails:** Important operational safety notes (e.g., *'Unknown guest identity'*, *'Contradiction detected'*) are prepended as `warning` properties automatically by the business logic, overriding any possible AI misinterpretation.
 - **Prompt Injection Quarantine:** Found at Room 214. The pipeline does not sanitize or delete the injection text (preserving the evidence of malice), but enforces a `confidence: 'low'` and a hardcoded warning, completely neutralizing the attack before the handover generation phase.
 
+## Task 08: Handover Generation (Completed)
+
+**What was built:**
+- `handover.ts` (model): Defines `HandoverThread` and `Handover` — pure operational types with no raw event metadata.
+- `handover.service.ts`: Converts `GroundedIssueThread[]` into the Handover domain object. Separates threads into `highPriority`, `stillOpen`, `newlyResolved`, and `newTonight` using a deterministic type-based heuristic. Aggregates all statement warnings into the root `warnings[]` array.
+- `handover.formatter.ts`: Provides a `toJSON()` (strips all evidence internals) and `toPlainText()` (manager-readable in < 60 seconds) output.
+- `handover.test.ts`: Validates all 7 specification requirements including no-raw-event leakage, no hallucinations, and correct warning surfacing.
+
+**Architectural Decisions:**
+- **Action-first by type:** The `HIGH_PRIORITY_TYPES` set drives all prioritization. Any thread whose events contain a type in this set (e.g., `compliance`, `deposit_issue`, `maintenance`, `incident`) is lifted to `highPriority` unless it is already `newly_resolved`.
+- **Prompt Injection Quarantine at output boundary:** Threads where all statements are `confidence: 'low'` (i.e., pure injection content) are omitted from operational buckets entirely. A single warning string is surfaced at the root level, keeping the Morning Manager view clean.
+- **Formatter as the final safety boundary:** The `HandoverFormatter` is the last filter before the payload leaves the system. It removes the nested `evidence` objects so that no raw `eventId`, `sourceType`, or `excerpt` metadata reaches the manager's screen.
+
 ## To Be Updated
 
 After implementation:
