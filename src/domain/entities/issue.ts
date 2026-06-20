@@ -1,13 +1,16 @@
 import { Event } from './event';
+import { Evidence } from '../value-objects/evidence';
 
 export type IssueStatus = 'still_open' | 'newly_resolved' | 'new_tonight';
 
 export interface Issue {
   id: string; // Unique identifier for the issue thread
+  title: string;
   room: string | null;
   type: string; // e.g., 'maintenance', 'deposit_issue'
   status: IssueStatus;
   events: Event[]; // Historical events reconciled into this single thread
+  evidence: Evidence[];
   
   // Contradiction & Risk Detection
   hasContradiction: boolean;

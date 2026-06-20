@@ -31,10 +31,16 @@ test('Domain Models structure compilation', (t) => {
   // Test Issue
   const issue: Issue = {
     id: 'issue_1',
+    title: 'maintenance - Room 112',
     room: '112',
     type: 'maintenance',
     status: 'still_open',
     events: [event],
+    evidence: [{
+      eventId: event.id,
+      sourceType: event.source as 'events.json' | 'night-logs.md',
+      excerpt: 'AC broken'
+    }],
     hasContradiction: false,
     isPromptInjectionRisk: false,
     isIncomplete: false

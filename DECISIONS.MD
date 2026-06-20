@@ -226,6 +226,19 @@ TypeScript interfaces representing the core business domain: `Hotel`, `Event`, `
 - **Untrusted Source Handling:** Data from both files is loaded 'as-is' (beyond schema compliance). No text manipulation happens here.
 - **Structured Error Logging:** If Zod validation fails, `Pino` emits an error log explicitly identifying the `hotelId` and `operation`, assisting the theoretical platform team in debugging corrupted structured event dumps.
 
+## Task 05: Normalization (Completed)
+
+**What was built:**
+- `event.extractor.ts`: Filters out purely informational events (e.g., resolved noise complaints, successful check-ins) and maps the relevant `events.json` events into a unified `Issue` format.
+- `markdown.extractor.ts`: Extracts bullet points from unstructured markdown (`night-logs.md`), preserving the raw multilingual text as evidence and attempting basic regex room number extraction.
+- `normalization.service.ts`: Orchestrates extraction to produce a single `Issue[]` array ready for reconciliation.
+- `normalization.test.ts`: Verifies JSON events and Markdown text both become `Issue`s, and asserts that prompt injection flags and multilingual raw texts are preserved.
+
+**Architectural Decisions:**
+- **No Reconciliation Yet:** Normalization maps a 1-to-1 relationship from event/bullet to issue. Threading (merging multiple nights into one issue) is intentionally delayed to the next stage to keep parsing dumb and deterministic.
+- **Dumb Markdown Parsing:** Due to the 2-hour constraint, the markdown parser uses simple string splitting by bullet points (`- `). The full raw string is preserved in `evidence` to avoid losing meaning, translating, or misinterpreting Chinese/mixed-language entries.
+- **Handling Prompt Injections:** The system relies on keyword detection during normalization to flip the `isPromptInjectionRisk` flag. This safely quarantines the prompt injection as evidence without executing it.
+
 ## To Be Updated
 
 After implementation:
