@@ -195,6 +195,37 @@ Deprioritized:
 - **`tsx` for Development:** Allows direct execution of TypeScript files during dev without a separate build step, maximizing the 2-hour implementation window.
 - **Separation of App vs Server:** `app.ts` builds the Fastify instance, while `server.ts` binds it to a port. This makes the architecture minimal but maintainable.
 
+## Task 03: Domain Model (Completed)
+
+**What was built:**
+TypeScript interfaces representing the core business domain: `Hotel`, `Event`, `Issue`, `Evidence`, and `Handover`.
+
+**Architectural Decisions:**
+- **Evidence Tracking (`evidence.ts`):** Included an `Evidence` interface that requires an `eventId` and `excerpt`. Every `HandoverItem` must contain `Evidence[]` to ensure grounding. No statement can be generated without tracing back to its source.
+- **Issue Threading (`issue.ts`):** `Issue` contains an array of `Event[]`. This models reconciliation by grouping chronological events across nights into a single thread.
+- **Risk Surface (`issue.ts`):** Added explicit boolean flags (`hasContradiction`, `isPromptInjectionRisk`, `isIncomplete`) directly to the `Issue` model to ensure uncertainties are surfaced to the morning manager programmatically.
+- **Action-First Design (`handover.ts`):** `HandoverItem` explicitly separates `actionRequired` from `summary`. The overall `Handover` splits items into operational buckets (`highPriority`, `newlyResolved`, `warnings`) rather than a chronological timeline.
+- **Multilingual Support:** The `Event.description` stores the raw original text, and the pipeline will rely on LLMs during normalization/handover generation to handle translations implicitly while retaining the raw excerpt in `Evidence`.
+
+**Suggested Future Extensions:**
+- **Metadata Flexibility:** Use a generic `Metadata` key-value map within `Event` or `Issue` to store unstructured or unpredictable context without breaking core type definitions.
+- **Shift Modeling:** Introduce a `Shift` domain entity to support tracking issues across multiple overlapping shifts (e.g., Afternoon, Night) rather than assuming a binary Night -> Morning transition.
+- **Timeline Aggregation:** Create an `EventTimeline` object that abstracts how events are sorted and visually grouped to decouple presentation from the core domain structure.
+
+## Task 04: Ingestion (Completed)
+
+**What was built:**
+- `event.schema.ts`: Zod schema for validating the structured JSON file.
+- `json.parser.ts`: Loads and parses `events.json`, ensuring type safety via Zod.
+- `markdown.parser.ts`: Minimal file reader to retrieve raw `night-logs.md` content.
+- `ingest.service.ts`: Orchestrates the parsers and logs the operational status using Pino.
+- `ingestion.test.ts`: Verifies JSON is mapped correctly and Markdown is loaded without altering content.
+
+**Architectural Decisions:**
+- **Strict Separation of Concerns:** Ingestion focuses solely on I/O boundaries. It does not perform any normalization or reconciliation, ensuring parsing errors are strictly isolated from business logic.
+- **Untrusted Source Handling:** Data from both files is loaded 'as-is' (beyond schema compliance). No text manipulation happens here.
+- **Structured Error Logging:** If Zod validation fails, `Pino` emits an error log explicitly identifying the `hotelId` and `operation`, assisting the theoretical platform team in debugging corrupted structured event dumps.
+
 ## To Be Updated
 
 After implementation:
