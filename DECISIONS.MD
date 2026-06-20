@@ -3,10 +3,10 @@
 ## Timebox
 
 Start:
-2026-06-20 13:30
+2026-06-20 13:30 (GMT+8)
 
 Stop:
-(In progress)
+2026-06-20 15:18 (GMT+8)
 
 Target Duration:
 ~2 hours

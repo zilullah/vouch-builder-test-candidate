@@ -9,12 +9,12 @@
 
 ### Health Check
 ```bash
-curl -X GET https://your-domain.up.Vercel.app/health
+curl -X GET https://vouch-builder-test-candidate-production.up.railway.app/health
 ```
 
 ### Generate Handover
 ```bash
-curl -X POST https://your-domain.up.Vercel.app/handover \
+curl -X POST https://vouch-builder-test-candidate-production.up.railway.app/handover \
   -H "Content-Type: application/json" \
   -d '{"hotelId":"lumen-sg"}'
 ```
