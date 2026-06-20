@@ -239,6 +239,18 @@ TypeScript interfaces representing the core business domain: `Hotel`, `Event`, `
 - **Dumb Markdown Parsing:** Due to the 2-hour constraint, the markdown parser uses simple string splitting by bullet points (`- `). The full raw string is preserved in `evidence` to avoid losing meaning, translating, or misinterpreting Chinese/mixed-language entries.
 - **Handling Prompt Injections:** The system relies on keyword detection during normalization to flip the `isPromptInjectionRisk` flag. This safely quarantines the prompt injection as evidence without executing it.
 
+## Task 06: Reconciliation (Completed)
+
+**What was built:**
+- `issue-thread.ts`: New domain entity grouping multiple `Issue` events into a lifecycle timeline.
+- `reconciliation.service.ts`: Merges normalized events into four strategic buckets: `stillOpen`, `newlyResolved`, `newTonight`, and `contradictions`.
+- `reconciliation.test.ts`: Verifies exact operational groupings (e.g., merging events from Room 112 across multiple JSON logs and Markdown into one thread).
+
+**Architectural Decisions:**
+- **Deterministic Heuristics:** Used exact keywords and properties (like `room`, `compliance` category, or `leak` keyword) rather than AI to group issues. This ensures 100% stability and zero hallucinations in the core data pipeline.
+- **Strict Chronological Status Inference:** Thread statuses (`new_tonight`, `still_open`, `newly_resolved`) are inferred mathematically by crossing a static timestamp boundary and checking the final resolved status of the latest event in the timeline.
+- **Safety Over Assumptions:** Contradictions (like the occupancy discrepancy for Room 205) are aggressively flagged using heuristic keyword matching on the raw evidence excerpt.
+
 ## To Be Updated
 
 After implementation:
