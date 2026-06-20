@@ -181,6 +181,20 @@ Deprioritized:
 
 ---
 
+## Task 02: Project Setup (Completed)
+
+**What was built:**
+- Minimal Node.js + TypeScript setup using Fastify, Zod, and Pino.
+- Modular route registering pattern (`app.ts` separates app instantiation from `server.ts` execution for better testability).
+- Health check route at `GET /health` responding with `{"status": "ok"}`.
+
+**Architectural Decisions:**
+- **Pino for Logging:** Chosen for fast, structured JSON logging which is essential for the handover traceability.
+- **Fastify:** Chosen for performance and straightforward plugin-based routing.
+- **Zod:** Included to provide type-safe runtime validations for the incoming handover data during later ingestion.
+- **`tsx` for Development:** Allows direct execution of TypeScript files during dev without a separate build step, maximizing the 2-hour implementation window.
+- **Separation of App vs Server:** `app.ts` builds the Fastify instance, while `server.ts` binds it to a port. This makes the architecture minimal but maintainable.
+
 ## To Be Updated
 
 After implementation:
