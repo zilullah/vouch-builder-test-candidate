@@ -251,6 +251,18 @@ TypeScript interfaces representing the core business domain: `Hotel`, `Event`, `
 - **Strict Chronological Status Inference:** Thread statuses (`new_tonight`, `still_open`, `newly_resolved`) are inferred mathematically by crossing a static timestamp boundary and checking the final resolved status of the latest event in the timeline.
 - **Safety Over Assumptions:** Contradictions (like the occupancy discrepancy for Room 205) are aggressively flagged using heuristic keyword matching on the raw evidence excerpt.
 
+## Task 07: Grounding (Completed)
+
+**What was built:**
+- `grounded-thread.ts`: Introduces `GroundedIssueThread` and `GroundedStatement`. Every statement strictly maps to a piece of evidence.
+- `grounding.service.ts`: Translates raw events into verified statements. Evaluates thread conditions to append deterministic safety warnings without rewriting the text.
+- `grounding.test.ts`: Ensures prompt injections, contradictions, and missing data all receive the correct confidence flags and string warnings.
+
+**Architectural Decisions:**
+- **Zero Hallucination Tolerance:** Instead of having an LLM synthesize a story from multiple events, the Grounding layer copies the exact `excerpt` from the raw `Evidence` into the `text` property of the `GroundedStatement`. This guarantees 100% adherence to "No inferred facts allowed."
+- **Deterministic Guardrails:** Important operational safety notes (e.g., *'Unknown guest identity'*, *'Contradiction detected'*) are prepended as `warning` properties automatically by the business logic, overriding any possible AI misinterpretation.
+- **Prompt Injection Quarantine:** Found at Room 214. The pipeline does not sanitize or delete the injection text (preserving the evidence of malice), but enforces a `confidence: 'low'` and a hardcoded warning, completely neutralizing the attack before the handover generation phase.
+
 ## To Be Updated
 
 After implementation:
