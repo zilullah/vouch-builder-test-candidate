@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { Hotel } from './entities/hotel';
 import { Event } from './entities/event';
 import { Issue } from './entities/issue';
-import { HandoverItem, Handover } from './models/handover';
+import { Handover, HandoverThread } from './models/handover';
 
 test('Domain Models structure compilation', (t) => {
   // Test Hotel
@@ -48,28 +48,26 @@ test('Domain Models structure compilation', (t) => {
   assert.strictEqual(issue.events.length, 1);
 
   // Test Handover
-  const handoverItem: HandoverItem = {
-    issueId: issue.id,
+  const thread: HandoverThread = {
+    id: issue.id,
+    title: issue.title,
     room: issue.room,
-    actionRequired: 'Call vendor for AC repair',
-    summary: 'AC broken in room 112',
-    evidence: [{
-      eventId: event.id,
-      sourceType: event.source,
-      excerpt: 'AC broken'
-    }]
+    status: issue.status,
+    summary: ['AC broken in room 112'],
+    confidence: 'high'
   };
   
   const handover: Handover = {
     hotelId: hotel.id,
-    shiftDate: '2026-05-26',
+    generatedAt: new Date().toISOString(),
     highPriority: [],
-    stillOpen: [handoverItem],
+    stillOpen: [thread],
     newlyResolved: [],
     newTonight: [],
+    informational: [],
     warnings: []
   };
 
   assert.strictEqual(handover.stillOpen[0].room, '112');
-  assert.strictEqual(handover.stillOpen[0].evidence.length, 1);
+  assert.strictEqual(handover.stillOpen[0].confidence, 'high');
 });
