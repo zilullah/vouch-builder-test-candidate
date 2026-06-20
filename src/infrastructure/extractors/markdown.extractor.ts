@@ -39,7 +39,7 @@ export class MarkdownExtractor {
       status: 'new_tonight',
       events: [{
         id,
-        timestamp: new Date().toISOString(),
+        timestamp: 'UNKNOWN — not recorded in source log',
         type: 'night_log',
         room,
         guest: null,

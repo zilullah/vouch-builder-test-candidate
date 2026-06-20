@@ -13,4 +13,5 @@ export interface IssueThread {
   hasContradiction: boolean;
   isPromptInjectionRisk: boolean;
   isIncomplete: boolean;
+  informational?: boolean; // Seen and logged; no morning action required
 }

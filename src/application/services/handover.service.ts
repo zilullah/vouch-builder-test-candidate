@@ -13,34 +13,49 @@ const HIGH_PRIORITY_TYPES = new Set([
   'check_in_issue',
 ]);
 
+// Max excerpt length in a warning string to keep output scannable
+const WARNING_EXCERPT_MAX = 120;
+
 export class HandoverService {
   generate(hotelId: string, threads: GroundedIssueThread[]): Handover {
     const highPriority: HandoverThread[] = [];
     const stillOpen: HandoverThread[] = [];
     const newlyResolved: HandoverThread[] = [];
     const newTonight: HandoverThread[] = [];
+    const informational: HandoverThread[] = [];
     const warnings: string[] = [];
 
     for (const thread of threads) {
-      // Aggregate warnings from all statements
+      // Aggregate warnings from all statements — text must quote source evidence directly
       for (const statement of thread.statements) {
-        if (statement.warning) {
-          // Surface contradiction warning at root level
-          if (statement.warning.includes('Contradiction detected') && !warnings.some(w => w.includes(thread.room ?? thread.title))) {
-            warnings.push(`Room ${thread.room ?? thread.title}: occupancy or state mismatch detected.`);
-          }
-          // Surface prompt injection at root level
-          if (statement.warning.includes('Prompt injection attempt') && !warnings.some(w => w.includes('Prompt injection'))) {
-            warnings.push(`Prompt injection attempt detected in Room ${thread.room ?? 'unknown'}. Input filed as evidence only.`);
-          }
-          // Surface missing info at root level
-          if (statement.warning.includes('Missing information') && !warnings.some(w => w.includes(`Missing: ${thread.id}`))) {
-            warnings.push(`Missing: ${thread.id} — ${statement.warning}`);
-          }
+        if (!statement.warning) continue;
+
+        const excerpt = statement.evidence.excerpt.substring(0, WARNING_EXCERPT_MAX);
+        const roomLabel = thread.room ? `Room ${thread.room}` : thread.title;
+
+        if (statement.warning.includes('Contradiction detected') &&
+            !warnings.some(w => w.startsWith(`[CONTRADICTION] ${roomLabel}`))) {
+          warnings.push(`[CONTRADICTION] ${roomLabel}: Source log states — "${excerpt}"`);
+        }
+
+        if (statement.warning.includes('Prompt injection attempt') &&
+            !warnings.some(w => w.startsWith('[SECURITY]'))) {
+          warnings.push(`[SECURITY] ${roomLabel}: Untrusted instruction content received — "${excerpt.substring(0, 80)}" — treated as evidence only, not executed.`);
+        }
+
+        if (statement.warning.includes('Missing information') &&
+            !warnings.some(w => w.startsWith(`[INCOMPLETE] ${thread.id}`))) {
+          warnings.push(`[INCOMPLETE] ${thread.id}: ${statement.warning} — Source: "${excerpt}"`);
         }
       }
 
-      // Skip prompt-injection-only threads from the operational categories
+      // Informational threads: seen and logged, no morning action required
+      if (thread.informational) {
+        informational.push(this.toHandoverThread(thread));
+        continue;
+      }
+
+      // Skip prompt-injection-only threads from operational categories
       if (thread.isPromptInjectionRisk && thread.statements.every(s => s.confidence === 'low')) {
         continue;
       }
@@ -66,6 +81,7 @@ export class HandoverService {
       stillOpen,
       newlyResolved,
       newTonight,
+      informational,
       warnings,
     };
   }

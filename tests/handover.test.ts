@@ -155,8 +155,8 @@ test('Handover Service', (t) => {
   }
 
   // 5. Warnings section includes contradictions, missing info, and prompt injection
-  assert.ok(handover.warnings.some(w => w.includes('205') && w.includes('mismatch')), 'Room 205 contradiction must be in warnings');
-  assert.ok(handover.warnings.some(w => w.includes('Prompt injection') && w.includes('214')), 'Room 214 injection must be in warnings');
+  assert.ok(handover.warnings.some(w => w.includes('CONTRADICTION') && w.includes('205')), 'Room 205 contradiction must be in warnings');
+  assert.ok(handover.warnings.some(w => w.includes('SECURITY') && w.includes('214')), 'Room 214 injection must be in warnings');
 
   // 6. Grouped issues are compressed correctly (immigration = 1 thread for 3+ events)
   assert.ok(compliance, 'Immigration backlog is compressed into a single thread');

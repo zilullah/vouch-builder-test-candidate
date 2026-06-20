@@ -11,10 +11,14 @@ export interface Issue {
   status: IssueStatus;
   events: Event[]; // Historical events reconciled into this single thread
   evidence: Evidence[];
-  
+
   // Contradiction & Risk Detection
   hasContradiction: boolean;
   contradictionDetails?: string; // Explanation of conflicting events
   isPromptInjectionRisk: boolean; // True if instructions disguised as data are detected
   isIncomplete: boolean; // True if critical context is missing (e.g., missing room numbers)
+
+  // Informational flag: event was seen but requires no action. Must NOT be silently dropped.
+  // Manager sees it in the informational bucket for full audit trail.
+  informational?: boolean;
 }

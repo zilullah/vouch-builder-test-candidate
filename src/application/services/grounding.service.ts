@@ -58,7 +58,8 @@ export class GroundingService {
       statements,
       hasContradiction: thread.hasContradiction,
       isPromptInjectionRisk: thread.isPromptInjectionRisk,
-      isIncomplete: thread.isIncomplete
+      isIncomplete: thread.isIncomplete,
+      informational: thread.informational,
     };
   }
 }

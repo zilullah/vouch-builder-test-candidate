@@ -25,7 +25,8 @@ export class ReconciliationService {
           evidence: [],
           hasContradiction: false,
           isPromptInjectionRisk: false,
-          isIncomplete: false
+          isIncomplete: false,
+          informational: true, // start as informational; will be cleared if any non-informational issue joins
         });
       }
 
@@ -34,6 +35,10 @@ export class ReconciliationService {
       thread.evidence.push(...issue.evidence);
       thread.isPromptInjectionRisk = thread.isPromptInjectionRisk || issue.isPromptInjectionRisk;
       thread.isIncomplete = thread.isIncomplete || issue.isIncomplete;
+      // If any issue in the thread is NOT informational, the thread is actionable
+      if (!issue.informational) {
+        thread.informational = false;
+      }
       
       // Contradiction Detection Heuristic
       const hasContradiction = issue.evidence.some(e => 
@@ -50,8 +55,17 @@ export class ReconciliationService {
       contradictions: []
     };
 
-    // Vouch Builder Test assumption: Current shift boundary is around May 29th PM / May 30th AM.
-    const TONIGHT_BOUNDARY = new Date('2026-05-29T12:00:00+08:00').getTime();
+    // Compute the shift boundary dynamically from the actual data.
+    // We treat the 12 hours before the latest recorded event as "tonight".
+    // This ensures the system works correctly regardless of which date it runs on.
+    const allTimestamps = issues
+      .flatMap(i => i.events.map(e => e.timestamp))
+      .filter(ts => ts !== 'UNKNOWN — not recorded in source log')
+      .map(ts => new Date(ts).getTime())
+      .filter(t => !isNaN(t));
+
+    const latestEvent = allTimestamps.length > 0 ? Math.max(...allTimestamps) : Date.now();
+    const TONIGHT_BOUNDARY = latestEvent - (12 * 60 * 60 * 1000); // 12h before latest event
 
     for (const thread of threadMap.values()) {
       // Sort chronologically

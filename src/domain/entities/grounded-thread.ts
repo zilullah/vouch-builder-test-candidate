@@ -14,7 +14,9 @@ export interface GroundedIssueThread {
   room: string | null;
   status: ThreadStatus;
   statements: GroundedStatement[];
+  events?: import('../entities/event').Event[];
   hasContradiction: boolean;
   isPromptInjectionRisk: boolean;
   isIncomplete: boolean;
+  informational?: boolean;
 }

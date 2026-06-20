@@ -16,5 +16,6 @@ export interface Handover {
   stillOpen: HandoverThread[];
   newlyResolved: HandoverThread[];
   newTonight: HandoverThread[];
+  informational: HandoverThread[]; // Seen and logged; no morning action required
   warnings: string[];
 }
