@@ -16,6 +16,7 @@ interface FormattedHandover {
   stillOpen: FormattedHandoverThread[];
   newlyResolved: FormattedHandoverThread[];
   newTonight: FormattedHandoverThread[];
+  informational: FormattedHandoverThread[];
   warnings: string[];
 }
 
@@ -33,6 +34,7 @@ export class HandoverFormatter {
       stillOpen: handover.stillOpen.map(this.formatThread),
       newlyResolved: handover.newlyResolved.map(this.formatThread),
       newTonight: handover.newTonight.map(this.formatThread),
+      informational: handover.informational.map(this.formatThread),
       warnings: handover.warnings,
     };
   }

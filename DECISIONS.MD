@@ -276,15 +276,59 @@ TypeScript interfaces representing the core business domain: `Hotel`, `Event`, `
 - **Prompt Injection Quarantine at output boundary:** Threads where all statements are `confidence: 'low'` (i.e., pure injection content) are omitted from operational buckets entirely. A single warning string is surfaced at the root level, keeping the Morning Manager view clean.
 - **Formatter as the final safety boundary:** The `HandoverFormatter` is the last filter before the payload leaves the system. It removes the nested `evidence` objects so that no raw `eventId`, `sourceType`, or `excerpt` metadata reaches the manager's screen.
 
-## To Be Updated
+## Task 09: API (Completed)
 
-After implementation:
+**What was built:**
+- `app.ts`: Fastify application setup with global error handlers and a fallback `ContentTypeParser`.
+- `server.ts`: Entry point to bind the app to port 3000.
+- `health.route.ts`: Exposes `GET /health` endpoint.
+- `handover.route.ts`: Exposes `POST /handover` endpoint to trigger the end-to-end pipeline.
+- `pipeline.service.ts`: Orchestrates all services (Ingest -> Normalize -> Reconcile -> Ground -> Handover).
+- `api.test.ts`: Verifies API behavior, validation logic, and proper HTTP status codes.
 
-* What was built
-* What was skipped
-* How reconciliation works
-* How grounding is enforced
-* Where AI helped
-* Where AI failed
-* What would be improved with more time
-* One surprising finding
+**Architectural Decisions:**
+- **Thin Routes:** Controllers do not contain business logic. They solely delegate to `PipelineService`.
+- **Global Content-Type Parser Fallback:** Addressed an issue where `curl` commands in Windows PowerShell (acting as aliases to `Invoke-WebRequest`) send requests without `Content-Type: application/json`. The fallback uses `JSON.parse` securely on raw body buffers.
+
+## Production Audit & Final Fixes
+
+During a production-readiness audit to ensure alignment with the "Operator-First" and "Trustworthy Operational Accuracy" protocol, three critical changes were made:
+- **Critical Fix #1: Deterministic Timestamps:** Removed `new Date()` from the markdown extractor to ensure the system is 100% deterministic on identical input. Used sentinel `'UNKNOWN — not recorded in source log'`.
+- **Critical Fix #2: No Silent Dropping:** Replaced hardcoded filtering of "resolved" or "informational" events with an `informational` flag. These now surface in a dedicated `informational` bucket in the final output to preserve the audit trail without distracting the manager.
+- **Critical Fix #3: Ground-Truth Warnings Only:** Replaced system-generated warning strings with direct excerpts from the raw log evidence, ensuring all contradiction and security warnings are completely traceable to source data.
+
+---
+
+## Final Project Summary
+
+### What was built
+An end-to-end deterministic data pipeline that ingests structured JSON and unstructured Markdown, normalizes them, reconciles issues across time boundaries, grounds every output to strict evidence, and exposes an action-first JSON handover over a Fastify REST API.
+
+### What was skipped
+- Database persistence layer (data is handled completely in-memory per request).
+- Advanced LLM integration for fuzzy parsing or semantic reconciliation (intentionally skipped to prioritize strict determinism and speed).
+- A Frontend UI.
+- Complex authentication middleware for the API.
+
+### How reconciliation works
+Reconciliation relies on a `ReconciliationService` that loops over normalized `Issue` objects. It determines a shared `threadId` using deterministic heuristics (e.g. matching room numbers, or explicit categorizations like `compliance` or `leak`). It then groups chronological `Event`s into an `IssueThread`. The thread's overall status (`newly_resolved`, `still_open`, `new_tonight`) is mathematically deduced from the latest event status and a dynamically computed shift boundary (12 hours before the latest event timestamp).
+
+### How grounding is enforced
+Grounding is enforced through 1:1 object mapping. Every statement generated must correspond to an `Evidence` object containing the `eventId`, `sourceType`, and the exact raw `excerpt`. The `GroundingService` validates threads and appends deterministic warnings without hallucinating text. Finally, the `HandoverFormatter` acts as a safety boundary, stripping technical metadata and evidence IDs from the final output payload to keep it clean.
+
+### Where AI helped
+- Quickly generating boilerplate Fastify setup and Zod schemas.
+- Accelerating test-driven development (TDD) by writing exhaustive test cases for edge scenarios (prompt injection, contradictions, empty bodies).
+- Identifying structural flaws during the final "Production Audit".
+
+### Where AI failed
+- Initially generating non-deterministic code (like `new Date()`) and creating "hallucinated" system warning messages instead of strictly referencing source evidence. These were caught and remediated during the audit.
+- Initially assuming Postman requests failing with `415 Unsupported Media Type` was a Postman bug, rather than identifying it as a missing header in a specific `form-data` configuration.
+
+### What would be improved with more time
+- **Data Persistence:** Storing `IssueThreads` in PostgreSQL so the system can natively maintain historical context beyond a single JSON file.
+- **Advanced NLP Parsing:** Using a small, deterministic language model for named-entity recognition (NER) in the `MarkdownExtractor` to better pull room numbers and guest names without relying on fragile RegEx.
+- **Comprehensive Logging Stack:** Integrating OpenTelemetry instead of standard Pino for distributed tracing across multiple hotel microservices.
+
+### One surprising finding
+Prompt injection can be mitigated surprisingly well at the data-modeling layer. By quarantining suspicious data using a strict `isPromptInjectionRisk` boolean, and letting the domain logic filter out those threads from operational buckets (rendering them as `warnings[]`), the system remained safe without relying on an expensive LLM to act as a "firewall."
